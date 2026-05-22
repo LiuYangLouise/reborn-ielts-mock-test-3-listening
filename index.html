@@ -288,21 +288,40 @@
   let audioElements = [null, null, null, null];
   let partStatus = { 1: { submitted: false, finishedAudio: false }, 2: { submitted: false, finishedAudio: false }, 3: { submitted: false, finishedAudio: false }, 4: { submitted: false, finishedAudio: false } };
   let globalTimerSeconds = 0, globalInterval = null, scheduleTimeouts = [], allPartsCompleted = false, reviewTimeoutId = null, examStarted = false;
-  let userAnswersStore = { p1: {}, p2single: {}, p2match: {}, p3multiple: {}, p3match: {}, p4: {} };
+  let currentPlayingIdx = 0; // 0-based index of currently playing part
 
   function showToast(msg) { let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); }
   function updateGlobalTimerDisplay() { let el=document.getElementById('globalTimerDisplay'); let m=Math.floor(globalTimerSeconds/60), s=globalTimerSeconds%60; el.textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; if(reviewTimeoutId && !allPartsCompleted) el.classList.add('warning'); else el.classList.remove('warning'); }
 
+  function stopCurrentAudio() {
+    if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) {
+      audioElements[currentPlayingIdx].pause();
+      audioElements[currentPlayingIdx].currentTime = 0;
+    }
+  }
+
   function markPartSubmitted(part) {
     if(partStatus[part].submitted) return;
     partStatus[part].submitted = true;
-    if(audioElements[part-1]) { audioElements[part-1].pause(); audioElements[part-1].currentTime=0; }
+    // if this part is currently playing, stop it
+    if(part-1 === currentPlayingIdx) {
+      stopCurrentAudio();
+    }
     showToast(`Part ${part} submitted early.`);
     if(document.getElementById('partContainer').dataset.currentPart == part) document.getElementById('partContainer').classList.add('disabled-input');
-    checkAllPartsCompletion();
+    // after marking submitted, we need to continue schedule: the audio sequence will skip it automatically via check
+    // but we also need to advance if the submitted part is the one currently playing or about to play.
+    // The main sequence will be driven by a recursive playNext that checks submitted status before each play.
+    // We'll call a function to restart the scheduler if needed.
+    restartPlaySequence();
   }
 
-  function markPartFinishedAudio(part) { if(!partStatus[part].finishedAudio) { partStatus[part].finishedAudio = true; checkAllPartsCompletion(); } }
+  function markPartFinishedAudio(part) {
+    if(partStatus[part].finishedAudio) return;
+    partStatus[part].finishedAudio = true;
+    if(!partStatus[part].submitted) showToast(`Part ${part} audio finished.`);
+    checkAllPartsCompletion();
+  }
 
   function checkAllPartsCompletion() {
     let allDone = true;
@@ -311,6 +330,7 @@
       allPartsCompleted = true;
       if(globalInterval) clearInterval(globalInterval);
       for(let t of scheduleTimeouts) clearTimeout(t);
+      scheduleTimeouts = [];
       let hasEarly = Object.values(partStatus).some(st => st.submitted === true);
       if(hasEarly) showFullReview(); else startReviewCountdown();
     }
@@ -343,9 +363,9 @@
           else { correct=ANSWERS.p3match[`q${i}`]; let slot=document.querySelector(`.match-slot[data-q="${i}"] .tag`); user=slot?slot.dataset.value:'—'; isCorrect=user===correct; }
         }
         else { correct=ANSWERS.p4[`q${i}`]; let inp=document.querySelector(`input[name="q${i}"]`); user=inp?inp.value.trim():'—'; isCorrect=user.toLowerCase()===correct.toLowerCase(); }
-        table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${escapeHtml(correct)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`;
+        table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${escapeHtml(correct)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}<tr>`;
       }
-      table += '</tbody></table>';
+      table += '</tbody><table>';
       resultsDiv.innerHTML = table;
     }
     showToast("Test completed. Final review displayed.");
@@ -403,24 +423,60 @@
     if(part===3) attachCheckboxLimit();
   }
 
-  function playSequentialAudio() {
-    let idx = 0;
-    function playNext() {
-      if(idx >= 4) return;
-      if(partStatus[idx+1].submitted) { idx++; playNext(); return; }
-      let audio = new Audio(AUDIO_FILES[idx]);
-      audioElements[idx] = audio;
-      audio.play().catch(e => console.warn("Auto-play blocked? User interaction required."));
-      let timeoutId = setTimeout(() => { if(audio && !partStatus[idx+1].submitted) { audio.pause(); markPartFinishedAudio(idx+1); } idx++; playNext(); }, DURATIONS[idx]*1000);
-      scheduleTimeouts.push(timeoutId);
+  function restartPlaySequence() {
+    // clear any pending timeouts
+    for(let t of scheduleTimeouts) clearTimeout(t);
+    scheduleTimeouts = [];
+    // stop any currently playing audio
+    if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) {
+      audioElements[currentPlayingIdx].pause();
     }
-    playNext();
+    // start from beginning but skip already submitted/finished parts
+    let startIdx = 0;
+    while(startIdx < 4 && (partStatus[startIdx+1].submitted || partStatus[startIdx+1].finishedAudio)) startIdx++;
+    if(startIdx >= 4) {
+      // all already finished or submitted
+      checkAllPartsCompletion();
+      return;
+    }
+    playNextPart(startIdx);
+  }
+
+  function playNextPart(idx) {
+    if(idx >= 4) {
+      // no more parts to play, check completion
+      checkAllPartsCompletion();
+      return;
+    }
+    let partNum = idx+1;
+    if(partStatus[partNum].submitted || partStatus[partNum].finishedAudio) {
+      // skip this part
+      playNextPart(idx+1);
+      return;
+    }
+    // play this part
+    currentPlayingIdx = idx;
+    let audio = new Audio(AUDIO_FILES[idx]);
+    audioElements[idx] = audio;
+    audio.play().catch(e => console.warn("Audio play error:", e));
+    let durationMs = DURATIONS[idx] * 1000;
+    let timeoutId = setTimeout(() => {
+      if(audio && !partStatus[partNum].submitted) {
+        audio.pause();
+        markPartFinishedAudio(partNum);
+      }
+      // move to next part regardless
+      playNextPart(idx+1);
+    }, durationMs);
+    scheduleTimeouts.push(timeoutId);
   }
 
   function earlySubmitAllHandler() {
     if(!examStarted) { showToast("Test not started yet."); return; }
     if(confirm("Early submit all parts? Test will end immediately.")) {
-      for(let p=1;p<=4;p++) if(!partStatus[p].submitted && !partStatus[p].finishedAudio) markPartSubmitted(p);
+      // stop all ongoing audio
+      for(let i=0;i<4;i++) if(audioElements[i]) { audioElements[i].pause(); audioElements[i].currentTime=0; }
+      for(let p=1;p<=4;p++) if(!partStatus[p].submitted && !partStatus[p].finishedAudio) partStatus[p].submitted = true;
       checkAllPartsCompletion();
     }
   }
@@ -432,7 +488,8 @@
     document.getElementById('globalEarlySubmitBtn').disabled = false;
     document.querySelectorAll('.part-btn').forEach(btn => btn.disabled = false);
     loadPart(1);
-    playSequentialAudio();
+    // start sequence
+    playNextPart(0);
     globalInterval = setInterval(()=>{ if(!allPartsCompleted && !reviewTimeoutId) globalTimerSeconds++; updateGlobalTimerDisplay(); }, 1000);
   }
 
