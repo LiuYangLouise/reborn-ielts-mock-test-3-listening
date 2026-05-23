@@ -259,7 +259,7 @@
 <div id="toast">Saved</div>
 
 <script>
-  // ======================== EMBEDDED PART CONTENT (exact from user's new files) ========================
+  // ======================== EMBEDDED PART CONTENT ========================
   const PART1_HTML = `<div class="group"><h4>Questions 1-10</h4><p class="instructions">Complete the form below.<br>Write <b>ONE WORD ONLY OR A NUMBER</b> for each answer.</p><h4>Bicycle Rental Form</h4><p><b>Type of bicycle:</b> <b>1.</b> <input type="text" name="q1" data-q="1" class="blank" autocomplete="off"></p><p><b>Special price:</b> £ <b>2.</b> <input type="text" name="q2" data-q="2" class="blank" autocomplete="off"> (and £40 as a <b>3.</b> <input type="text" name="q3" data-q="3" class="blank" autocomplete="off">)</p><p><b>What the special price includes:</b></p><ul><li>insurance as against <b>4.</b> <input type="text" name="q4" data-q="4" class="blank" autocomplete="off"></li><li>a good lock</li><li>a city map</li><li>Two <b>5.</b> <input type="text" name="q5" data-q="5" class="blank" autocomplete="off">: head and tail</li></ul><p><b>Not included in the price:</b></p><ul><li><b>6.</b> <input type="text" name="q6" data-q="6" class="blank" autocomplete="off"></li><li>Rent a <b>7.</b> <input type="text" name="q7" data-q="7" class="blank" autocomplete="off"> kit at £3</li><li>The shop has a <b>8.</b> <input type="text" name="q8" data-q="8" class="blank" autocomplete="off"> for repeat customers</li><li>Tomorrow, the shop closes at <b>9.</b> <input type="text" name="q9" data-q="9" class="blank" autocomplete="off"></li><li>Shop Address: 28 <b>10.</b> <input type="text" name="q10" data-q="10" class="blank" autocomplete="off"> Street</li></ul></div><div class="results-in-page"></div>`;
 
   const PART2_HTML = `<div class="group"><h4>Questions 11-15</h4><p class="instructions">Choose the correct letter, <b>A</b>, <b>B</b> or <b>C</b>.</p><p><b>11</b> What does Mark say first attracts people to working for Johnson Jones?</p><label><input type="radio" name="q11" value="A"> <b>A</b> the pay</label><label><input type="radio" name="q11" value="B"> <b>B</b> the staff discount</label><label><input type="radio" name="q11" value="C"> <b>C</b> the working hours</label><p><b>12</b> Mark says the company is one of the country's most successful retailers because it</p><label><input type="radio" name="q12" value="A"> <b>A</b> is focused on long term planning.</label><label><input type="radio" name="q12" value="B"> <b>B</b> provides excellent customer service.</label><label><input type="radio" name="q12" value="C"> <b>C</b> offers value for money.</label><p><b>13</b> Mark says that because Johnson Jones is a partnership, the staff</p><label><input type="radio" name="q13" value="A"> <b>A</b> are better trained.</label><label><input type="radio" name="q13" value="B"> <b>B</b> have better job security.</label><label><input type="radio" name="q13" value="C"> <b>C</b> are given more responsibility.</label><p><b>14</b> What is the typical annual bonus that partners receive?</p><label><input type="radio" name="q14" value="A"> <b>A</b> 8%</label><label><input type="radio" name="q14" value="B"> <b>B</b> 15%</label><label><input type="radio" name="q14" value="C"> <b>C</b> 20%</label><p><b>15</b> To qualify for the leisure and holiday facilities, partners must have worked for the company for</p><label><input type="radio" name="q15" value="A"> <b>A</b> one year.</label><label><input type="radio" name="q15" value="B"> <b>B</b> six months.</label><label><input type="radio" name="q15" value="C"> <b>C</b> three months.</label></div><div class="group"><h4>Questions 16-20</h4><p class="instructions">What information is given about each of the following staff holiday centres? Choose <b>FIVE</b> answers from the box and write the correct letter <b>A-G</b>.</p><div class="matching-flex"><div class="match-list"><div class="match-row"><span class="match-q"><b>16</b> The Grange</span><span class="match-slot" data-q="16"></span></div><div class="match-row"><span class="match-q"><b>17</b> Meadow House</span><span class="match-slot" data-q="17"></span></div><div class="match-row"><span class="match-q"><b>18</b> Coombe Manor</span><span class="match-slot" data-q="18"></span></div><div class="match-row"><span class="match-q"><b>19</b> The Barn</span><span class="match-slot" data-q="19"></span></div><div class="match-row"><span class="match-q"><b>20</b> The Stable</span><span class="match-slot" data-q="20"></span></div></div><div class="matching-options"><strong>Options</strong><div class="drag-pool"><div class="drag-option" draggable="true" data-value="A">A available for celebrations and parties</div><div class="drag-option" draggable="true" data-value="B">B suitable for families with children</div><div class="drag-option" draggable="true" data-value="C">C regularly used by senior management</div><div class="drag-option" draggable="true" data-value="D">D also supplies food to the company's supermarkets</div><div class="drag-option" draggable="true" data-value="E">E spa facilities available</div><div class="drag-option" draggable="true" data-value="F">F similar to being in someone's home</div><div class="drag-option" draggable="true" data-value="G">G good for short breaks</div></div></div></div></div><div class="results-in-page"></div>`;
@@ -283,36 +283,98 @@
     "P3 Personal Support Workers.mp3",
     "P4 Calotype photography.mp3"
   ];
-  const DURATIONS = [480, 450, 446, 420]; // seconds
+  const DURATIONS = [480, 450, 446, 420];
 
+  // ========== GLOBAL STATE & ANSWER STORAGE (persisted across part switches) ==========
   let audioElements = [null, null, null, null];
   let partStatus = { 1: { submitted: false, finishedAudio: false }, 2: { submitted: false, finishedAudio: false }, 3: { submitted: false, finishedAudio: false }, 4: { submitted: false, finishedAudio: false } };
   let globalTimerSeconds = 0, globalInterval = null, scheduleTimeouts = [], allPartsCompleted = false, reviewTimeoutId = null, examStarted = false;
-  let currentPlayingIdx = 0; // 0-based index of currently playing part
+  let currentPlayingIdx = 0;
+
+  // PERMANENT ANSWER STORAGE (saved immediately on each user interaction)
+  let savedAnswers = {
+    p1: { q1:'', q2:'', q3:'', q4:'', q5:'', q6:'', q7:'', q8:'', q9:'', q10:'' },
+    p2single: { q11:'', q12:'', q13:'', q14:'', q15:'' },
+    p2match: { q16:'', q17:'', q18:'', q19:'', q20:'' },
+    p3multiple: { q21_22: [], q23_24: [] },
+    p3match: { q25:'', q26:'', q27:'', q28:'', q29:'', q30:'' },
+    p4: { q31:'', q32:'', q33:'', q34:'', q35:'', q36:'', q37:'', q38:'', q39:'', q40:'' }
+  };
+
+  // Helper to save answers from current DOM (used after any user action)
+  function captureCurrentToSaved() {
+    // P1 blanks
+    for(let i=1;i<=10;i++) { let inp = document.querySelector(`input[name="q${i}"]`); if(inp) savedAnswers.p1[`q${i}`] = inp.value.trim(); }
+    // P2 single
+    for(let i=11;i<=15;i++) { let sel = document.querySelector(`input[name="q${i}"]:checked`); if(sel) savedAnswers.p2single[`q${i}`] = sel.value; }
+    // P2 matching
+    for(let i=16;i<=20;i++) { let slot = document.querySelector(`.match-slot[data-q="${i}"] .tag`); if(slot) savedAnswers.p2match[`q${i}`] = slot.dataset.value; }
+    // P3 multiple
+    let checked21 = [...document.querySelectorAll(`input[name="q21_22"]:checked`)].map(cb=>cb.value);
+    let checked23 = [...document.querySelectorAll(`input[name="q23_24"]:checked`)].map(cb=>cb.value);
+    savedAnswers.p3multiple.q21_22 = checked21;
+    savedAnswers.p3multiple.q23_24 = checked23;
+    // P3 matching
+    for(let i=25;i<=30;i++) { let slot = document.querySelector(`.match-slot[data-q="${i}"] .tag`); if(slot) savedAnswers.p3match[`q${i}`] = slot.dataset.value; }
+    // P4 blanks
+    for(let i=31;i<=40;i++) { let inp = document.querySelector(`input[name="q${i}"]`); if(inp) savedAnswers.p4[`q${i}`] = inp.value.trim(); }
+  }
+
+  // Restore answers to current DOM (when switching parts)
+  function restoreSavedToCurrent(part) {
+    if(part === 1) {
+      for(let i=1;i<=10;i++) { let inp = document.querySelector(`input[name="q${i}"]`); if(inp) inp.value = savedAnswers.p1[`q${i}`]; }
+    } else if(part === 2) {
+      for(let i=11;i<=15;i++) { let radio = document.querySelector(`input[name="q${i}"][value="${savedAnswers.p2single[`q${i}`]}"]`); if(radio) radio.checked = true; }
+      for(let i=16;i<=20;i++) {
+        let slot = document.querySelector(`.match-slot[data-q="${i}"]`);
+        let val = savedAnswers.p2match[`q${i}`];
+        if(slot && val) {
+          let opt = document.querySelector(`.drag-option[data-value="${val}"]`);
+          if(opt && !slot.classList.contains('filled')) {
+            let tag = document.createElement('span'); tag.className = 'tag'; tag.dataset.value = val; tag.textContent = opt.textContent;
+            slot.innerHTML = ''; slot.appendChild(tag); slot.classList.add('filled');
+            opt.classList.add('hidden-in-pool');
+          }
+        }
+      }
+    } else if(part === 3) {
+      savedAnswers.p3multiple.q21_22.forEach(v => { let cb = document.querySelector(`input[name="q21_22"][value="${v}"]`); if(cb) cb.checked = true; });
+      savedAnswers.p3multiple.q23_24.forEach(v => { let cb = document.querySelector(`input[name="q23_24"][value="${v}"]`); if(cb) cb.checked = true; });
+      for(let i=25;i<=30;i++) {
+        let slot = document.querySelector(`.match-slot[data-q="${i}"]`);
+        let val = savedAnswers.p3match[`q${i}`];
+        if(slot && val) {
+          let opt = document.querySelector(`.drag-option[data-value="${val}"]`);
+          if(opt && !slot.classList.contains('filled')) {
+            let tag = document.createElement('span'); tag.className = 'tag'; tag.dataset.value = val; tag.textContent = opt.textContent;
+            slot.innerHTML = ''; slot.appendChild(tag); slot.classList.add('filled');
+            opt.classList.add('hidden-in-pool');
+          }
+        }
+      }
+      // trigger checkbox limit after restore
+      document.querySelectorAll('.group[data-qgroup]').forEach(group => {
+        let limit = 2, checkboxes = group.querySelectorAll('input[type="checkbox"]');
+        let update = () => { let checked = group.querySelectorAll('input:checked').length; checkboxes.forEach(cb => { if(!cb.checked) cb.disabled = checked >= limit; }); };
+        update();
+      });
+    } else if(part === 4) {
+      for(let i=31;i<=40;i++) { let inp = document.querySelector(`input[name="q${i}"]`); if(inp) inp.value = savedAnswers.p4[`q${i}`]; }
+    }
+  }
 
   function showToast(msg) { let t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); }
   function updateGlobalTimerDisplay() { let el=document.getElementById('globalTimerDisplay'); let m=Math.floor(globalTimerSeconds/60), s=globalTimerSeconds%60; el.textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; if(reviewTimeoutId && !allPartsCompleted) el.classList.add('warning'); else el.classList.remove('warning'); }
 
-  function stopCurrentAudio() {
-    if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) {
-      audioElements[currentPlayingIdx].pause();
-      audioElements[currentPlayingIdx].currentTime = 0;
-    }
-  }
+  function stopCurrentAudio() { if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) { audioElements[currentPlayingIdx].pause(); audioElements[currentPlayingIdx].currentTime = 0; } }
 
   function markPartSubmitted(part) {
     if(partStatus[part].submitted) return;
     partStatus[part].submitted = true;
-    // if this part is currently playing, stop it
-    if(part-1 === currentPlayingIdx) {
-      stopCurrentAudio();
-    }
+    if(part-1 === currentPlayingIdx) stopCurrentAudio();
     showToast(`Part ${part} submitted early.`);
     if(document.getElementById('partContainer').dataset.currentPart == part) document.getElementById('partContainer').classList.add('disabled-input');
-    // after marking submitted, we need to continue schedule: the audio sequence will skip it automatically via check
-    // but we also need to advance if the submitted part is the one currently playing or about to play.
-    // The main sequence will be driven by a recursive playNext that checks submitted status before each play.
-    // We'll call a function to restart the scheduler if needed.
     restartPlaySequence();
   }
 
@@ -332,7 +394,7 @@
       for(let t of scheduleTimeouts) clearTimeout(t);
       scheduleTimeouts = [];
       let hasEarly = Object.values(partStatus).some(st => st.submitted === true);
-      if(hasEarly) showFullReview(); else startReviewCountdown();
+      if(hasEarly) finalizeAndShowResults(); else startReviewCountdown();
     }
   }
 
@@ -340,32 +402,41 @@
     globalTimerSeconds = 120;
     updateGlobalTimerDisplay();
     if(globalInterval) clearInterval(globalInterval);
-    globalInterval = setInterval(() => { if(globalTimerSeconds <= 0) { clearInterval(globalInterval); showFullReview(); } else { globalTimerSeconds--; updateGlobalTimerDisplay(); } }, 1000);
+    globalInterval = setInterval(() => { if(globalTimerSeconds <= 0) { clearInterval(globalInterval); finalizeAndShowResults(); } else { globalTimerSeconds--; updateGlobalTimerDisplay(); } }, 1000);
     reviewTimeoutId = setTimeout(()=>{}, 121000);
   }
 
-  function showFullReview() {
+  function finalizeAndShowResults() {
     if(reviewTimeoutId) clearTimeout(reviewTimeoutId);
     if(globalInterval) clearInterval(globalInterval);
     let container = document.getElementById('partContainer');
     let resultsDiv = container.querySelector('.results-in-page');
     if(resultsDiv) {
       let table = '<h4>📊 Final Answer Review</h4><table class="results-table"><thead><th>Question</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th></thead><tbody>';
-      for(let i=1;i<=40;i++) {
+      // Q1-10
+      for(let i=1;i<=10;i++) { let user=savedAnswers.p1[`q${i}`]||'—'; let correct=ANSWERS.p1[`q${i}`]; let isCorrect=user.toLowerCase()===correct.toLowerCase(); table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${correct}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`; }
+      // Q11-20
+      for(let i=11;i<=20;i++) {
         let user='—', correct='—', isCorrect=false;
-        if(i<=10) { correct=ANSWERS.p1[`q${i}`]; let inp=document.querySelector(`input[name="q${i}"]`); user=inp?inp.value.trim():'—'; isCorrect=user.toLowerCase()===correct.toLowerCase(); }
-        else if(i<=20) {
-          if(i<=15) { correct=ANSWERS.p2single[`q${i}`]; let sel=document.querySelector(`input[name="q${i}"]:checked`); user=sel?sel.value:'—'; isCorrect=user===correct; }
-          else { correct=ANSWERS.p2match[`q${i}`]; let slot=document.querySelector(`.match-slot[data-q="${i}"] .tag`); user=slot?slot.dataset.value:'—'; isCorrect=user===correct; }
-        }
-        else if(i<=30) {
-          if(i<=24) { let groupKey=i<=22?'q21_22':'q23_24'; correct=ANSWERS.p3multiple[groupKey].join(','); let checked=[...document.querySelectorAll(`input[name="${groupKey}"]:checked`)].map(c=>c.value); user=checked.join(',')||'—'; isCorrect=checked.sort().join()===ANSWERS.p3multiple[groupKey].sort().join(); }
-          else { correct=ANSWERS.p3match[`q${i}`]; let slot=document.querySelector(`.match-slot[data-q="${i}"] .tag`); user=slot?slot.dataset.value:'—'; isCorrect=user===correct; }
-        }
-        else { correct=ANSWERS.p4[`q${i}`]; let inp=document.querySelector(`input[name="q${i}"]`); user=inp?inp.value.trim():'—'; isCorrect=user.toLowerCase()===correct.toLowerCase(); }
-        table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${escapeHtml(correct)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}<tr>`;
+        if(i<=15) { user=savedAnswers.p2single[`q${i}`]||'—'; correct=ANSWERS.p2single[`q${i}`]; isCorrect=user===correct; }
+        else { user=savedAnswers.p2match[`q${i}`]||'—'; correct=ANSWERS.p2match[`q${i}`]; isCorrect=user===correct; }
+        table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${escapeHtml(correct)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`;
       }
-      table += '</tbody><table>';
+      // Q21-24 multiple
+      for(let grp of ['q21_22','q23_24']) {
+        let userArr = savedAnswers.p3multiple[grp]||[];
+        let correctArr = ANSWERS.p3multiple[grp];
+        let userStr = userArr.length? userArr.join(', ') : '—';
+        let correctStr = correctArr.join(', ');
+        let isCorrect = userArr.length===correctArr.length && userArr.every(v=>correctArr.includes(v));
+        let qLabel = grp==='q21_22'?'21-22':'23-24';
+        table += `<tr><td style="font-weight:600">${qLabel}</td><td>${escapeHtml(userStr)}</td><td>${escapeHtml(correctStr)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`;
+      }
+      // Q25-30 matching
+      for(let i=25;i<=30;i++) { let user=savedAnswers.p3match[`q${i}`]||'—'; let correct=ANSWERS.p3match[`q${i}`]; let isCorrect=user===correct; table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${escapeHtml(correct)}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`; }
+      // Q31-40
+      for(let i=31;i<=40;i++) { let user=savedAnswers.p4[`q${i}`]||'—'; let correct=ANSWERS.p4[`q${i}`]; let isCorrect=user.toLowerCase()===correct.toLowerCase(); table += `<tr><td style="font-weight:600">${i}</td><td>${escapeHtml(user)}</td><td>${correct}</td><td class="${isCorrect?'result-correct':'result-incorrect'}">${isCorrect?'✔ Correct':'✖ Incorrect'}</td></tr>`; }
+      table += '</tbody></table>';
       resultsDiv.innerHTML = table;
     }
     showToast("Test completed. Final review displayed.");
@@ -391,17 +462,27 @@
         let tag = document.createElement('span'); tag.className = 'tag'; tag.dataset.value = val; tag.textContent = source.textContent;
         slot.innerHTML = ''; slot.appendChild(tag); slot.classList.add('filled');
         source.classList.add('hidden-in-pool');
+        captureCurrentToSaved();
       };
     });
     let pool = document.querySelector('.drag-pool');
-    if(pool) { pool.ondragover = e=>e.preventDefault(); pool.ondrop = e => { let val = e.dataTransfer.getData('text/plain'); let tag = document.querySelector(`.tag[data-value="${val}"]`); if(tag && tag.closest('.match-slot')) { let opt = document.querySelector(`.drag-option[data-value="${val}"]`); if(opt) opt.classList.remove('hidden-in-pool'); tag.closest('.match-slot').innerHTML = ''; tag.closest('.match-slot').classList.remove('filled'); } }; }
+    if(pool) { pool.ondragover = e=>e.preventDefault(); pool.ondrop = e => { let val = e.dataTransfer.getData('text/plain'); let tag = document.querySelector(`.tag[data-value="${val}"]`); if(tag && tag.closest('.match-slot')) { let opt = document.querySelector(`.drag-option[data-value="${val}"]`); if(opt) opt.classList.remove('hidden-in-pool'); tag.closest('.match-slot').innerHTML = ''; tag.closest('.match-slot').classList.remove('filled'); captureCurrentToSaved(); } }; }
+  }
+
+  function attachInputCapture() {
+    document.querySelectorAll('input.blank, input.blank-input, input[type="radio"], input[type="checkbox"]').forEach(inp => {
+      inp.removeEventListener('input', captureCurrentToSaved);
+      inp.removeEventListener('change', captureCurrentToSaved);
+      inp.addEventListener('input', captureCurrentToSaved);
+      inp.addEventListener('change', captureCurrentToSaved);
+    });
   }
 
   function attachCheckboxLimit() {
     document.querySelectorAll('.group[data-qgroup]').forEach(group => {
       const limit = 2;
       const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-      const update = () => { let checked = group.querySelectorAll('input:checked').length; checkboxes.forEach(cb => { if(!cb.checked) cb.disabled = checked >= limit; }); };
+      const update = () => { let checked = group.querySelectorAll('input:checked').length; checkboxes.forEach(cb => { if(!cb.checked) cb.disabled = checked >= limit; }); captureCurrentToSaved(); };
       checkboxes.forEach(cb => { cb.removeEventListener('change', update); cb.addEventListener('change', update); });
       update();
     });
@@ -421,63 +502,42 @@
     panel.insertAdjacentElement('afterend', btn);
     if(part===2 || part===3) initDragDropForPart();
     if(part===3) attachCheckboxLimit();
+    attachInputCapture();
+    restoreSavedToCurrent(part);
+    captureCurrentToSaved();
   }
 
   function restartPlaySequence() {
-    // clear any pending timeouts
     for(let t of scheduleTimeouts) clearTimeout(t);
     scheduleTimeouts = [];
-    // stop any currently playing audio
-    if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) {
-      audioElements[currentPlayingIdx].pause();
-    }
-    // start from beginning but skip already submitted/finished parts
+    if(currentPlayingIdx !== null && audioElements[currentPlayingIdx]) audioElements[currentPlayingIdx].pause();
     let startIdx = 0;
     while(startIdx < 4 && (partStatus[startIdx+1].submitted || partStatus[startIdx+1].finishedAudio)) startIdx++;
-    if(startIdx >= 4) {
-      // all already finished or submitted
-      checkAllPartsCompletion();
-      return;
-    }
+    if(startIdx >= 4) { checkAllPartsCompletion(); return; }
     playNextPart(startIdx);
   }
 
   function playNextPart(idx) {
-    if(idx >= 4) {
-      // no more parts to play, check completion
-      checkAllPartsCompletion();
-      return;
-    }
+    if(idx >= 4) { checkAllPartsCompletion(); return; }
     let partNum = idx+1;
-    if(partStatus[partNum].submitted || partStatus[partNum].finishedAudio) {
-      // skip this part
-      playNextPart(idx+1);
-      return;
-    }
-    // play this part
+    if(partStatus[partNum].submitted || partStatus[partNum].finishedAudio) { playNextPart(idx+1); return; }
     currentPlayingIdx = idx;
     let audio = new Audio(AUDIO_FILES[idx]);
     audioElements[idx] = audio;
     audio.play().catch(e => console.warn("Audio play error:", e));
-    let durationMs = DURATIONS[idx] * 1000;
     let timeoutId = setTimeout(() => {
-      if(audio && !partStatus[partNum].submitted) {
-        audio.pause();
-        markPartFinishedAudio(partNum);
-      }
-      // move to next part regardless
+      if(audio && !partStatus[partNum].submitted) { audio.pause(); markPartFinishedAudio(partNum); }
       playNextPart(idx+1);
-    }, durationMs);
+    }, DURATIONS[idx]*1000);
     scheduleTimeouts.push(timeoutId);
   }
 
   function earlySubmitAllHandler() {
     if(!examStarted) { showToast("Test not started yet."); return; }
     if(confirm("Early submit all parts? Test will end immediately.")) {
-      // stop all ongoing audio
       for(let i=0;i<4;i++) if(audioElements[i]) { audioElements[i].pause(); audioElements[i].currentTime=0; }
       for(let p=1;p<=4;p++) if(!partStatus[p].submitted && !partStatus[p].finishedAudio) partStatus[p].submitted = true;
-      checkAllPartsCompletion();
+      finalizeAndShowResults();
     }
   }
 
@@ -488,7 +548,6 @@
     document.getElementById('globalEarlySubmitBtn').disabled = false;
     document.querySelectorAll('.part-btn').forEach(btn => btn.disabled = false);
     loadPart(1);
-    // start sequence
     playNextPart(0);
     globalInterval = setInterval(()=>{ if(!allPartsCompleted && !reviewTimeoutId) globalTimerSeconds++; updateGlobalTimerDisplay(); }, 1000);
   }
